@@ -8,6 +8,15 @@ import { validate } from './config/env.validation';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { UserModule } from './modules/user/user.module';
+import { RegistrationPeriodModule } from './modules/registration-period/registration-period.module';
+import { WorkScheduleModule } from './modules/work-schedule/work-schedule.module';
+import { LeaveRequestModule } from './modules/leave-request/leave-request.module';
+import { SalaryModule } from './modules/salary/salary.module';
+import { RegulationModule } from './modules/regulation/regulation.module';
+import { NotificationModule } from './modules/notification/notification.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { FileModule } from './modules/file/file.module';
+import { ChamCongModule } from './modules/cham-cong/cham-cong.module';
 
 @Module({
   imports: [
@@ -30,6 +39,15 @@ import { UserModule } from './modules/user/user.module';
     }),
     UserModule,
     AuthModule,
+    RegistrationPeriodModule,
+    WorkScheduleModule,
+    LeaveRequestModule,
+    SalaryModule,
+    RegulationModule,
+    NotificationModule,
+    DashboardModule,
+    FileModule,
+    ChamCongModule,
   ],
   controllers: [AppController],
   providers: [

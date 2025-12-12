@@ -7,54 +7,104 @@ import { UserService } from '../user/user.service';
 import { SigninDto } from './dto/signin.dto';
 import { SignupDto } from './dto/signup.dto';
 
-export interface AuthResult {
+/**
+ * Kết quả xác thực
+ */
+export interface KetQuaXacThuc {
   accessToken: string;
   user: User;
 }
 
+// Giữ lại tên cũ để tương thích ngược
+export type AuthResult = KetQuaXacThuc;
+
+/**
+ * Dịch vụ xác thực người dùng
+ * Xử lý đăng ký, đăng nhập và tạo token JWT
+ */
 @Injectable()
 export class AuthService {
-  private readonly accessTtl: number;
+  private readonly thoiGianHetHanToken: number;
 
   constructor(
-    private readonly userService: UserService,
-    private readonly jwtService: JwtService,
-    configService: ConfigService,
+    private readonly dichVuNguoiDung: UserService,
+    private readonly dichVuJwt: JwtService,
+    dichVuCauHinh: ConfigService,
   ) {
-    this.accessTtl = configService.get<number>('JWT_ACCESS_TTL', 3600);
+    this.thoiGianHetHanToken = dichVuCauHinh.get<number>(
+      'JWT_ACCESS_TTL',
+      3600,
+    );
   }
 
-  async signup(dto: SignupDto): Promise<AuthResult> {
-    const user = await this.userService.create({
-      ...dto,
+  /**
+   * Đăng ký tài khoản mới
+   * @param duLieu - Thông tin đăng ký
+   */
+  async dangKy(duLieu: SignupDto): Promise<KetQuaXacThuc> {
+    const nguoiDung = await this.dichVuNguoiDung.taoNguoiDung({
+      ...duLieu,
       role: UserRole.STAFF,
     });
-    return this.buildAuthResult(user);
+    return this.taoKetQuaXacThuc(nguoiDung);
   }
 
-  async signin(dto: SigninDto): Promise<AuthResult> {
-    const user = await this.userService.findByEmail(dto.email);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+  /**
+   * Alias cho dangKy (tương thích ngược)
+   */
+  async signup(duLieu: SignupDto): Promise<KetQuaXacThuc> {
+    return this.dangKy(duLieu);
+  }
+
+  /**
+   * Đăng nhập
+   * @param duLieu - Thông tin đăng nhập
+   */
+  async dangNhap(duLieu: SigninDto): Promise<KetQuaXacThuc> {
+    const nguoiDung = await this.dichVuNguoiDung.timTheoEmail(duLieu.email);
+    if (!nguoiDung) {
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ');
     }
 
-    const passwordMatches = await bcrypt.compare(
-      dto.password,
-      user.passwordHash,
+    const matKhauKhop = await bcrypt.compare(
+      duLieu.password,
+      nguoiDung.passwordHash,
     );
-    if (!passwordMatches) {
-      throw new UnauthorizedException('Invalid credentials');
+    if (!matKhauKhop) {
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ');
     }
 
-    return this.buildAuthResult(user);
+    return this.taoKetQuaXacThuc(nguoiDung);
   }
 
-  private async buildAuthResult(user: User): Promise<AuthResult> {
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: `${this.accessTtl}s`,
+  /**
+   * Alias cho dangNhap (tương thích ngược)
+   */
+  async signin(duLieu: SigninDto): Promise<KetQuaXacThuc> {
+    return this.dangNhap(duLieu);
+  }
+
+  /**
+   * Tạo kết quả xác thực với token JWT
+   * @param nguoiDung - Thông tin người dùng
+   */
+  private async taoKetQuaXacThuc(nguoiDung: User): Promise<KetQuaXacThuc> {
+    const payload = {
+      sub: nguoiDung.id,
+      email: nguoiDung.email,
+      role: nguoiDung.role,
+    };
+    const accessToken = await this.dichVuJwt.signAsync(payload, {
+      expiresIn: `${this.thoiGianHetHanToken}s`,
     });
 
-    return { accessToken, user };
+    return { accessToken, user: nguoiDung };
+  }
+
+  /**
+   * Alias cho taoKetQuaXacThuc (tương thích ngược)
+   */
+  private async buildAuthResult(nguoiDung: User): Promise<KetQuaXacThuc> {
+    return this.taoKetQuaXacThuc(nguoiDung);
   }
 }

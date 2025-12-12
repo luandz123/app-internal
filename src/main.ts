@@ -4,11 +4,19 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.enableCors();
-  app.setGlobalPrefix('api');
-  app.useGlobalPipes(
+/**
+ * Hàm khởi động ứng dụng
+ * Cấu hình và khởi chạy server NestJS
+ */
+async function khoiDongUngDung() {
+  const ungDung = await NestFactory.create(AppModule);
+
+  // Cấu hình CORS và tiền tố API
+  ungDung.enableCors();
+  ungDung.setGlobalPrefix('api');
+
+  // Cấu hình validation pipe toàn cục
+  ungDung.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
@@ -18,22 +26,27 @@ async function bootstrap() {
     }),
   );
 
-  const reflector = app.get(Reflector);
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
+  // Cấu hình serializer để loại bỏ các trường nhạy cảm
+  const boLocPhanChieu = ungDung.get(Reflector);
+  ungDung.useGlobalInterceptors(new ClassSerializerInterceptor(boLocPhanChieu));
 
-  const configService = app.get(ConfigService);
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Staff Management API')
-    .setDescription('Internal APIs for managing company staff')
+  // Cấu hình Swagger
+  const dichVuCauHinh = ungDung.get(ConfigService);
+  const cauHinhSwagger = new DocumentBuilder()
+    .setTitle('Staff Management API - Hệ thống Quản lý Nhân sự')
+    .setDescription('API nội bộ để quản lý nhân viên công ty')
     .setVersion('1.0.0')
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, document, {
+  const taiLieu = SwaggerModule.createDocument(ungDung, cauHinhSwagger);
+  SwaggerModule.setup('docs', ungDung, taiLieu, {
     swaggerOptions: { persistAuthorization: true },
   });
 
-  const port = configService.get<number>('PORT', 3000);
-  await app.listen(port);
+  // Khởi động server
+  const cong = dichVuCauHinh.get<number>('PORT', 3000);
+  await ungDung.listen(cong);
 }
-bootstrap();
+
+// Khởi chạy ứng dụng và xử lý lỗi
+void khoiDongUngDung();

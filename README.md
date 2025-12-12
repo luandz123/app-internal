@@ -1,14 +1,84 @@
-## Staff Management API
+## Staff Management API - HR Internal System
 
-Feature-complete NestJS backend used to manage internal staff records with PostgreSQL persistence, JWT authentication, and first-class API documentation.
+Complete NestJS backend for HR internal management system with PostgreSQL persistence, JWT authentication, role-based access control, and comprehensive API documentation.
 
-### What’s included
+### What's included
 
+#### Authentication & Authorization
 - **Authentication** – signup/signin flows backed by bcrypt-hashed passwords and short-lived JWT access tokens.
-- **User management** – CRUD endpoints for staff members (name, email, position, role) protected by the auth guard.
-- **PostgreSQL via TypeORM** – auto-loaded entities with sensible defaults for local development.
-- **Swagger UI** – live, secured documentation served at `/docs` with the ability to authorize using Bearer tokens.
-- **Best-practice bootstrapping** – validation pipe, class-serializer, global route prefix, and configurable environment validation.
+- **Role-based Access Control** – Admin and Staff roles with protected endpoints.
+- **Password Reset** – Admin can reset user passwords.
+
+#### User Management (Admin)
+- CRUD operations for staff members
+- Activate/Deactivate users
+- Update salary, position, and leave days
+- View leave balance
+
+#### Registration Period Management (Admin)
+- Create registration periods (weekly/monthly)
+- Configure registration deadlines
+- View registration status (registered/not registered)
+- Lock/Close registration periods
+
+#### Work Schedule (User)
+- Register work schedule (WFO/Remote/Off) for each period
+- View personal schedule in calendar format
+- Update schedule within deadline
+
+#### Leave Requests (User/Admin)
+- Submit leave requests: Annual leave, Sick leave, Late arrival, Early departure, Overtime, Business trip, Remote work, Compensatory leave, Unpaid leave
+- Upload attachments as evidence
+- Track request status
+- Admin: Approve/Reject requests with notes
+- Automatic notification on status change
+
+#### Salary Management (Admin)
+- Create monthly salary records
+- Configure: Base salary, Allowance, Bonus, OT pay, Deductions, Penalties, Insurance, Tax
+- Track work days, leave days, overtime hours
+- Finalize and mark as paid
+- Export to Excel
+
+#### Regulations (Admin/User)
+- Manage company regulations
+- Categorize regulations
+- Activate/Deactivate regulations
+- Users can view active regulations
+
+#### Notifications
+- System notifications
+- Leave request status notifications
+- Salary notifications
+- Schedule reminders
+- Broadcast to all users
+
+#### Dashboard & Statistics
+- **Admin Dashboard**: Total employees, pending requests, approved/rejected this month, late arrivals, OT hours, total salary
+- **Monthly Statistics**: Charts for late arrivals, OT, leaves, remote by month
+- **User Statistics**: Work days, remote days, leaves, late arrivals, OT by period
+- Request history with pagination
+
+#### File Management
+- Upload single/multiple files
+- Support: Images (JPEG, PNG, GIF, WebP), PDF, Word, Excel
+- Max file size: 10MB
+- Download/Delete files
+
+### API Endpoints Summary
+
+| Module | Endpoints | Access |
+| --- | --- | --- |
+| Auth | `/auth/signup`, `/auth/signin` | Public |
+| Users | `/users/*` | Admin (CRUD), User (profile) |
+| Registration Periods | `/registration-periods/*` | Admin |
+| Work Schedules | `/work-schedules/*` | Admin/User |
+| Leave Requests | `/leave-requests/*` | Admin/User |
+| Salaries | `/salaries/*` | Admin (CRUD), User (view) |
+| Regulations | `/regulations/*` | Admin (CRUD), User (view) |
+| Notifications | `/notifications/*` | Admin/User |
+| Dashboard | `/dashboard/*` | Admin/User |
+| Files | `/files/*` | All authenticated |
 
 ### Prerequisites
 
