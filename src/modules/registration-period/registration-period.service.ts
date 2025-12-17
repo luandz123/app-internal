@@ -28,9 +28,9 @@ export class RegistrationPeriodService {
       throw new BadRequestException('Ngày bắt đầu phải nhỏ hơn ngày kết thúc');
     }
 
-    if (deadline <= startDate) {
+    if (deadline >= startDate) {
       throw new BadRequestException(
-        'Hạn đăng ký phải diễn ra sau ngày bắt đầu',
+        'Hạn đăng ký phải diễn ra trước ngày bắt đầu',
       );
     }
 
