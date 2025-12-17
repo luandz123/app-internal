@@ -8,10 +8,8 @@ import {
   LeaveRequestType,
 } from '../leave-request/entities/leave-request.entity';
 import { Salary } from '../salary/entities/salary.entity';
-import {
-  WorkSchedule,
-  WorkType,
-} from '../work-schedule/entities/work-schedule.entity';
+import { WorkSchedule } from '../work-schedule/entities/work-schedule.entity';
+import { LoaiHinhLamViec } from '../work-schedule/constants/work-schedule.constants';
 
 export interface DashboardStats {
   totalEmployees: number;
@@ -196,10 +194,13 @@ export class DashboardService {
     });
 
     const stats = {
-      workDays: workSchedules.filter((s) => s.workType === WorkType.WFO).length,
-      remoteDays: workSchedules.filter((s) => s.workType === WorkType.REMOTE)
+      workDays: workSchedules.filter((s) => s.workType === LoaiHinhLamViec.WFO)
         .length,
-      offDays: workSchedules.filter((s) => s.workType === WorkType.OFF).length,
+      remoteDays: workSchedules.filter(
+        (s) => s.workType === LoaiHinhLamViec.REMOTE,
+      ).length,
+      offDays: workSchedules.filter((s) => s.workType === LoaiHinhLamViec.OFF)
+        .length,
       lateArrivals: 0,
       earlyDepartures: 0,
       leaveDays: 0,

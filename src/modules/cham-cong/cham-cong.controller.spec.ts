@@ -47,7 +47,7 @@ describe('ChamCongController - Controller Chấm công', () => {
     const mockChamCongService = {
       checkIn: jest.fn(),
       checkOut: jest.fn(),
-      getTodayAttendance: jest.fn(),
+      getTodayAttendances: jest.fn(),
       findAll: jest.fn(),
       findOne: jest.fn(),
       getMonthlyStats: jest.fn(),
@@ -131,29 +131,29 @@ describe('ChamCongController - Controller Chấm công', () => {
   describe('layChamCongHomNay - Lấy chấm công hôm nay', () => {
     it('nên trả về chấm công của hôm nay', async () => {
       // Arrange
-      dichVuChamCong.getTodayAttendance.mockResolvedValue(
+      dichVuChamCong.getTodayAttendances.mockResolvedValue([
         chamCongMau as ChamCong,
-      );
+      ]);
 
       // Act
       const ketQua = await controller.layChamCongHomNay(nguoiDungMau);
 
       // Assert
-      expect(dichVuChamCong.getTodayAttendance).toHaveBeenCalledWith(
+      expect(dichVuChamCong.getTodayAttendances).toHaveBeenCalledWith(
         nguoiDungMau.id,
       );
-      expect(ketQua).toEqual(chamCongMau);
+      expect(ketQua).toEqual([chamCongMau]);
     });
 
-    it('nên trả về null nếu chưa chấm công', async () => {
+    it('nên trả về mảng rỗng nếu chưa chấm công', async () => {
       // Arrange
-      dichVuChamCong.getTodayAttendance.mockResolvedValue(null);
+      dichVuChamCong.getTodayAttendances.mockResolvedValue([]);
 
       // Act
       const ketQua = await controller.layChamCongHomNay(nguoiDungMau);
 
       // Assert
-      expect(ketQua).toBeNull();
+      expect(ketQua).toEqual([]);
     });
   });
 

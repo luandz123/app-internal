@@ -2,7 +2,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -10,15 +9,12 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { RegistrationPeriod } from '../../registration-period/entities/registration-period.entity';
-
-export enum WorkType {
-  WFO = 'wfo', // Work From Office
-  REMOTE = 'remote',
-  OFF = 'off',
-}
+import {
+  LoaiCaLam,
+  LoaiHinhLamViec,
+} from '../constants/work-schedule.constants';
 
 @Entity({ name: 'work_schedules' })
-@Index(['userId', 'date'], { unique: true })
 export class WorkSchedule {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -40,8 +36,20 @@ export class WorkSchedule {
   @Column({ type: 'date' })
   date!: Date;
 
-  @Column({ type: 'enum', enum: WorkType, default: WorkType.WFO })
-  workType!: WorkType;
+  @Column({ type: 'enum', enum: LoaiHinhLamViec, default: LoaiHinhLamViec.WFO })
+  workType!: LoaiHinhLamViec;
+
+  @Column({ type: 'enum', enum: LoaiCaLam, default: LoaiCaLam.FULL_DAY })
+  loaiCa!: LoaiCaLam;
+
+  @Column({ type: 'varchar', length: 5 })
+  gioBatDau!: string;
+
+  @Column({ type: 'varchar', length: 5 })
+  gioKetThuc!: string;
+
+  @Column({ type: 'int' })
+  soPhutDuKien!: number;
 
   @Column({ type: 'text', nullable: true })
   note!: string | null;

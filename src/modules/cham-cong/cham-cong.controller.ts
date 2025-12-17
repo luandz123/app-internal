@@ -67,7 +67,7 @@ export class ChamCongController {
   @Get('today')
   @ApiOperation({ summary: 'Lấy thông tin chấm công hôm nay của bản thân' })
   async layChamCongHomNay(@CurrentUser() nguoiDung: User) {
-    return this.dichVuChamCong.getTodayAttendance(nguoiDung.id);
+    return this.dichVuChamCong.getTodayAttendances(nguoiDung.id);
   }
 
   /**

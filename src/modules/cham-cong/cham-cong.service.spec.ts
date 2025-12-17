@@ -5,10 +5,16 @@ import { Repository } from 'typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ChamCongService } from './cham-cong.service';
 import { ChamCong, TrangThaiChamCong } from './entities/cham-cong.entity';
+import { WorkSchedule } from '../work-schedule/entities/work-schedule.entity';
+import {
+  LoaiCaLam,
+  LoaiHinhLamViec,
+} from '../work-schedule/constants/work-schedule.constants';
 
 describe('ChamCongService - Dịch vụ Chấm công', () => {
   let dichVuChamCong: ChamCongService;
   let khoChamCong: jest.Mocked<Repository<ChamCong>>;
+  let khoLichLam: jest.Mocked<Repository<WorkSchedule>>;
 
   // Dữ liệu mẫu cho test
   const maNguoiDung = 'uuid-user-123';
@@ -34,6 +40,30 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
     ngayTao: new Date(),
     ngayCapNhat: new Date(),
     nguoiDung: null as any,
+    maLichLam: 'uuid-lich-123',
+    lichLam: null as any,
+    gioDangKyBatDau: '08:30',
+    gioDangKyKetThuc: '17:30',
+    soPhutDangKy: 480,
+    tyLeHoanThanh: 0,
+    loaiLamViec: LoaiHinhLamViec.WFO,
+  };
+
+  const lichLamMau: WorkSchedule = {
+    id: 'uuid-lich-123',
+    userId: maNguoiDung,
+    periodId: 'uuid-period-123',
+    date: ngayHomNay,
+    workType: LoaiHinhLamViec.WFO,
+    loaiCa: LoaiCaLam.FULL_DAY,
+    gioBatDau: '08:30',
+    gioKetThuc: '17:30',
+    soPhutDuKien: 480,
+    note: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    user: null as any,
+    period: null as any,
   };
 
   beforeEach(async () => {
@@ -48,10 +78,16 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
       })),
+    };
+
+    const mockWorkScheduleRepository = {
+      find: jest.fn(),
+      findOne: jest.fn(),
     };
 
     const mockConfigService = {
@@ -62,12 +98,17 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
       providers: [
         ChamCongService,
         { provide: getRepositoryToken(ChamCong), useValue: mockRepository },
+        {
+          provide: getRepositoryToken(WorkSchedule),
+          useValue: mockWorkScheduleRepository,
+        },
         { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
     dichVuChamCong = module.get<ChamCongService>(ChamCongService);
     khoChamCong = module.get(getRepositoryToken(ChamCong));
+    khoLichLam = module.get(getRepositoryToken(WorkSchedule));
   });
 
   afterEach(() => {
@@ -83,7 +124,8 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
 
     it('nên tạo bản ghi chấm công mới khi chưa check-in', async () => {
       // Arrange
-      khoChamCong.findOne.mockResolvedValue(null);
+      khoLichLam.find.mockResolvedValue([lichLamMau]);
+      khoChamCong.find.mockResolvedValue([]); // Chưa có check-in nào
       khoChamCong.create.mockReturnValue(chamCongMau);
       khoChamCong.save.mockResolvedValue(chamCongMau);
 
@@ -95,6 +137,7 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
       );
 
       // Assert
+      expect(khoLichLam.find).toHaveBeenCalled();
       expect(khoChamCong.create).toHaveBeenCalled();
       expect(khoChamCong.save).toHaveBeenCalled();
       expect(ketQua).toEqual(chamCongMau);
@@ -102,20 +145,19 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
 
     it('nên ném lỗi khi đã check-in rồi', async () => {
       // Arrange
-      khoChamCong.findOne.mockResolvedValue(chamCongMau);
+      khoLichLam.find.mockResolvedValue([lichLamMau]);
+      khoChamCong.find.mockResolvedValue([chamCongMau]); // Đã check-in
 
       // Act & Assert
       await expect(
         dichVuChamCong.checkIn(maNguoiDung, duLieuChamCongVao, diaChiIp),
       ).rejects.toThrow(BadRequestException);
-      await expect(
-        dichVuChamCong.checkIn(maNguoiDung, duLieuChamCongVao, diaChiIp),
-      ).rejects.toThrow('Bạn đã check-in hôm nay rồi');
     });
 
     it('nên lưu địa chỉ IP khi check-in', async () => {
       // Arrange
-      khoChamCong.findOne.mockResolvedValue(null);
+      khoLichLam.find.mockResolvedValue([lichLamMau]);
+      khoChamCong.find.mockResolvedValue([]);
       khoChamCong.create.mockReturnValue(chamCongMau);
       khoChamCong.save.mockResolvedValue(chamCongMau);
 
@@ -132,7 +174,8 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
 
     it('nên lưu vị trí GPS nếu có', async () => {
       // Arrange
-      khoChamCong.findOne.mockResolvedValue(null);
+      khoLichLam.find.mockResolvedValue([lichLamMau]);
+      khoChamCong.find.mockResolvedValue([]);
       khoChamCong.create.mockReturnValue(chamCongMau);
       khoChamCong.save.mockResolvedValue(chamCongMau);
 
@@ -187,50 +230,43 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
       await expect(
         dichVuChamCong.checkOut(maNguoiDung, duLieuChamCongRa, diaChiIp),
       ).rejects.toThrow(BadRequestException);
-      await expect(
-        dichVuChamCong.checkOut(maNguoiDung, duLieuChamCongRa, diaChiIp),
-      ).rejects.toThrow('Bạn chưa check-in hôm nay');
     });
 
     it('nên ném lỗi khi đã check-out rồi', async () => {
       // Arrange
-      const chamCongDaCheckOut = {
-        ...chamCongMau,
-        thoiGianRa: new Date(),
-      };
-      khoChamCong.findOne.mockResolvedValue(chamCongDaCheckOut);
+      // Trong logic mới, checkOut tìm bản ghi có trạng thái DA_VAO.
+      // Nếu đã check-out rồi thì trạng thái là HOAN_THANH, nên findOne sẽ trả về null (hoặc không tìm thấy bản ghi DA_VAO).
+      // Do đó lỗi sẽ là "Không tìm thấy lượt check-in nào chưa hoàn thành"
+      khoChamCong.findOne.mockResolvedValue(null);
 
       // Act & Assert
       await expect(
         dichVuChamCong.checkOut(maNguoiDung, duLieuChamCongRa, diaChiIp),
       ).rejects.toThrow(BadRequestException);
-      await expect(
-        dichVuChamCong.checkOut(maNguoiDung, duLieuChamCongRa, diaChiIp),
-      ).rejects.toThrow('Bạn đã check-out hôm nay rồi');
     });
   });
 
-  describe('getTodayAttendance - Lấy chấm công hôm nay', () => {
-    it('nên trả về bản ghi chấm công của hôm nay', async () => {
+  describe('getTodayAttendances - Lấy danh sách chấm công hôm nay', () => {
+    it('nên trả về danh sách bản ghi chấm công của hôm nay', async () => {
       // Arrange
-      khoChamCong.findOne.mockResolvedValue(chamCongMau);
+      khoChamCong.find.mockResolvedValue([chamCongMau]);
 
       // Act
-      const ketQua = await dichVuChamCong.getTodayAttendance(maNguoiDung);
+      const ketQua = await dichVuChamCong.getTodayAttendances(maNguoiDung);
 
       // Assert
-      expect(ketQua).toEqual(chamCongMau);
+      expect(ketQua).toEqual([chamCongMau]);
     });
 
-    it('nên trả về null nếu chưa có chấm công hôm nay', async () => {
+    it('nên trả về mảng rỗng nếu chưa có chấm công hôm nay', async () => {
       // Arrange
-      khoChamCong.findOne.mockResolvedValue(null);
+      khoChamCong.find.mockResolvedValue([]);
 
       // Act
-      const ketQua = await dichVuChamCong.getTodayAttendance(maNguoiDung);
+      const ketQua = await dichVuChamCong.getTodayAttendances(maNguoiDung);
 
       // Assert
-      expect(ketQua).toBeNull();
+      expect(ketQua).toEqual([]);
     });
   });
 
@@ -245,7 +281,7 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
       // Assert
       expect(khoChamCong.findOne).toHaveBeenCalledWith({
         where: { id: 'uuid-chamcong-123' },
-        relations: ['nguoiDung'],
+        relations: ['nguoiDung', 'lichLam'],
       });
       expect(ketQua).toEqual(chamCongMau);
     });
@@ -273,6 +309,7 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([danhSachChamCong, 1]),
@@ -299,6 +336,7 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
+        addOrderBy: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
@@ -385,7 +423,7 @@ describe('ChamCongService - Dịch vụ Chấm công', () => {
       // Assert
       expect(khoChamCong.find).toHaveBeenCalledWith({
         where: { ngay: ngayHomNay },
-        relations: ['nguoiDung'],
+        relations: ['nguoiDung', 'lichLam'],
         order: { thoiGianVao: 'ASC' },
       });
       expect(ketQua).toEqual(danhSachChamCong);

@@ -3,12 +3,16 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { DichVuLichLamViec } from './work-schedule.service';
-import { WorkSchedule, WorkType } from './entities/work-schedule.entity';
+import { WorkSchedule } from './entities/work-schedule.entity';
 import { RegistrationPeriodService } from '../registration-period/registration-period.service';
 import {
   RegistrationPeriod,
   RegistrationPeriodStatus,
 } from '../registration-period/entities/registration-period.entity';
+import {
+  LoaiCaLam,
+  LoaiHinhLamViec,
+} from './constants/work-schedule.constants';
 
 describe('DichVuLichLamViec - Dịch vụ Lịch làm việc', () => {
   let dichVu: DichVuLichLamViec;
@@ -32,7 +36,11 @@ describe('DichVuLichLamViec - Dịch vụ Lịch làm việc', () => {
     userId: 'uuid-user-123',
     periodId: 'uuid-ky-123',
     date: new Date('2026-01-15'),
-    workType: WorkType.WFO,
+    workType: LoaiHinhLamViec.WFO,
+    loaiCa: LoaiCaLam.FULL_DAY,
+    gioBatDau: '08:30',
+    gioKetThuc: '17:30',
+    soPhutDuKien: 480,
     note: '',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -80,8 +88,16 @@ describe('DichVuLichLamViec - Dịch vụ Lịch làm việc', () => {
       const duLieuTao = {
         periodId: 'uuid-ky-123',
         schedules: [
-          { date: '2026-01-15', workType: WorkType.WFO },
-          { date: '2026-01-16', workType: WorkType.REMOTE },
+          {
+            date: '2026-01-15',
+            workType: LoaiHinhLamViec.WFO,
+            loaiCa: LoaiCaLam.FULL_DAY,
+          },
+          {
+            date: '2026-01-16',
+            workType: LoaiHinhLamViec.REMOTE,
+            loaiCa: LoaiCaLam.FULL_DAY,
+          },
         ],
       };
       dichVuKy.findOne.mockResolvedValue(kyDangKyMau as RegistrationPeriod);
@@ -108,7 +124,13 @@ describe('DichVuLichLamViec - Dịch vụ Lịch làm việc', () => {
 
       const duLieuTao = {
         periodId: 'uuid-ky-123',
-        schedules: [{ date: '2026-01-15', workType: WorkType.WFO }],
+        schedules: [
+          {
+            date: '2026-01-15',
+            workType: LoaiHinhLamViec.WFO,
+            loaiCa: LoaiCaLam.FULL_DAY,
+          },
+        ],
       };
 
       // Act & Assert
@@ -127,7 +149,13 @@ describe('DichVuLichLamViec - Dịch vụ Lịch làm việc', () => {
 
       const duLieuTao = {
         periodId: 'uuid-ky-123',
-        schedules: [{ date: '2026-01-15', workType: WorkType.WFO }],
+        schedules: [
+          {
+            date: '2026-01-15',
+            workType: LoaiHinhLamViec.WFO,
+            loaiCa: LoaiCaLam.FULL_DAY,
+          },
+        ],
       };
 
       // Act & Assert
@@ -142,7 +170,13 @@ describe('DichVuLichLamViec - Dịch vụ Lịch làm việc', () => {
 
       const duLieuTao = {
         periodId: 'uuid-ky-123',
-        schedules: [{ date: '2026-03-15', workType: WorkType.WFO }], // Ngoài tháng 1
+        schedules: [
+          {
+            date: '2026-03-15',
+            workType: LoaiHinhLamViec.WFO,
+            loaiCa: LoaiCaLam.FULL_DAY,
+          },
+        ], // Ngoài tháng 1
       };
 
       // Act & Assert

@@ -71,7 +71,7 @@ export class AttendanceController {
   @Get('today')
   @ApiOperation({ summary: 'Lấy thông tin chấm công hôm nay của bản thân' })
   async layChamCongHomNay(@CurrentUser() nguoiDung: User) {
-    return await this.dichVuChamCong.getTodayAttendance(nguoiDung.id);
+    return await this.dichVuChamCong.getTodayAttendances(nguoiDung.id);
   }
 
   /**

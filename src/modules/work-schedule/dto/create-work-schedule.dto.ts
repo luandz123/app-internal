@@ -7,19 +7,37 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   ValidateNested,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { WorkType } from '../entities/work-schedule.entity';
+import { LoaiCaLam, LoaiHinhLamViec } from '../constants/work-schedule.constants';
 
 export class ScheduleItemDto {
   @ApiProperty({ example: '2025-11-24' })
   @IsDateString()
   date!: string;
 
-  @ApiProperty({ enum: WorkType, example: WorkType.WFO })
-  @IsEnum(WorkType)
-  workType!: WorkType;
+  @ApiProperty({ enum: LoaiHinhLamViec, example: LoaiHinhLamViec.WFO })
+  @IsEnum(LoaiHinhLamViec)
+  workType!: LoaiHinhLamViec;
+
+  @ApiProperty({ enum: LoaiCaLam, example: LoaiCaLam.FULL_DAY })
+  @IsEnum(LoaiCaLam)
+  loaiCa!: LoaiCaLam;
+
+  @ApiPropertyOptional({ example: '08:30', description: 'Required if loaiCa is custom' })
+  @ValidateIf((o) => o.loaiCa === LoaiCaLam.CUSTOM)
+  @IsNotEmpty()
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Time must be in HH:mm format' })
+  gioBatDau?: string;
+
+  @ApiPropertyOptional({ example: '17:30', description: 'Required if loaiCa is custom' })
+  @ValidateIf((o) => o.loaiCa === LoaiCaLam.CUSTOM)
+  @IsNotEmpty()
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Time must be in HH:mm format' })
+  gioKetThuc?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
