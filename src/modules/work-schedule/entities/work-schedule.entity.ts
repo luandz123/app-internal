@@ -39,7 +39,12 @@ export class WorkSchedule {
   @Column({ type: 'enum', enum: LoaiHinhLamViec, default: LoaiHinhLamViec.WFO })
   workType!: LoaiHinhLamViec;
 
-  @Column({ type: 'enum', enum: LoaiCaLam, default: LoaiCaLam.FULL_DAY })
+  @Column({
+    type: 'enum',
+    enum: LoaiCaLam,
+    default: LoaiCaLam.MORNING,
+    nullable: true,
+  })
   loaiCa!: LoaiCaLam;
 
   @Column({ type: 'varchar', length: 5, nullable: true })

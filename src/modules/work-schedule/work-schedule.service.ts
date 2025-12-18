@@ -60,24 +60,45 @@ export class DichVuLichLamViec {
     const danhSachLich: WorkSchedule[] = [];
 
     for (const [dateStr, items] of schedulesByDate) {
-      const resolvedItems = items.map((item) => {
+      const resolvedShifts: Array<{
+        loaiCa: LoaiCaLam;
+        workType: string;
+        start: string;
+        end: string;
+        minutes: number;
+        note?: string;
+      }> = [];
+
+      // Kiểm tra trùng loại ca trong cùng ngày (không cho đăng ký 2 ca sáng hoặc 2 ca chiều)
+      const caTypes = items
+        .filter((i) => i.loaiCa !== LoaiCaLam.CUSTOM)
+        .map((i) => i.loaiCa);
+      const uniqueCaTypes = new Set(caTypes);
+      if (caTypes.length !== uniqueCaTypes.size) {
+        throw new BadRequestException(
+          `Ngày ${dateStr} không thể đăng ký trùng loại ca`,
+        );
+      }
+
+      for (const item of items) {
         let start = item.gioBatDau;
         let end = item.gioKetThuc;
-        let breakMins = 0;
 
         if (item.loaiCa !== LoaiCaLam.CUSTOM) {
+          // Ca sáng hoặc chiều: dùng giờ mặc định
           const def = CA_LAM_VIEC_MAC_DINH[item.loaiCa];
           start = def.gioBatDau;
           end = def.gioKetThuc;
-          breakMins = def.soPhutNghi;
         } else {
-          if (!start || !end)
+          // Ca tùy chỉnh: bắt buộc có giờ
+          if (!start || !end) {
             throw new BadRequestException(
               'Giờ bắt đầu và kết thúc là bắt buộc cho ca tùy chỉnh',
             );
+          }
         }
 
-        const minutes = this.calculateMinutes(start, end) - breakMins;
+        const minutes = this.calculateMinutes(start, end);
 
         if (minutes < WORK_SCHEDULE_CONSTANTS.MIN_SHIFT_MINUTES) {
           throw new BadRequestException(
@@ -85,37 +106,45 @@ export class DichVuLichLamViec {
           );
         }
 
-        return { ...item, start: start, end: end, minutes };
-      });
+        resolvedShifts.push({
+          loaiCa: item.loaiCa,
+          workType: item.workType,
+          start: start,
+          end: end,
+          minutes,
+          note: item.note,
+        });
+      }
 
-      // Check overlap
-      resolvedItems.sort((a, b) => a.start.localeCompare(b.start));
-      for (let i = 0; i < resolvedItems.length - 1; i++) {
-        if (resolvedItems[i].end > resolvedItems[i + 1].start) {
+      // Kiểm tra trùng giờ giữa các ca
+      resolvedShifts.sort((a, b) => a.start.localeCompare(b.start));
+      for (let i = 0; i < resolvedShifts.length - 1; i++) {
+        if (resolvedShifts[i].end > resolvedShifts[i + 1].start) {
           throw new BadRequestException(
             `Ca làm việc ngày ${dateStr} bị trùng giờ`,
           );
         }
       }
 
-      for (const item of resolvedItems) {
+      // Tạo các bản ghi lịch
+      for (const shift of resolvedShifts) {
         danhSachLich.push(
           this.khoLich.create({
             userId: idNguoiDung,
             periodId: duLieu.periodId,
             date: new Date(dateStr),
-            workType: item.workType,
-            loaiCa: item.loaiCa,
-            gioBatDau: item.start,
-            gioKetThuc: item.end,
-            soPhutDuKien: item.minutes,
-            note: item.note,
+            workType: shift.workType as any,
+            loaiCa: shift.loaiCa,
+            gioBatDau: shift.start,
+            gioKetThuc: shift.end,
+            soPhutDuKien: shift.minutes,
+            note: shift.note,
           }),
         );
       }
     }
 
-    // Delete old schedules for this period
+    // Xóa lịch cũ của kỳ này
     await this.khoLich.delete({
       userId: idNguoiDung,
       periodId: duLieu.periodId,
@@ -200,9 +229,10 @@ export class DichVuLichLamViec {
         const def = CA_LAM_VIEC_MAC_DINH[duLieu.loaiCa];
         lich.gioBatDau = def.gioBatDau;
         lich.gioKetThuc = def.gioKetThuc;
-        lich.soPhutDuKien =
-          this.calculateMinutes(lich.gioBatDau, lich.gioKetThuc) -
-          def.soPhutNghi;
+        lich.soPhutDuKien = this.calculateMinutes(
+          lich.gioBatDau,
+          lich.gioKetThuc,
+        );
       } else {
         if (duLieu.gioBatDau) lich.gioBatDau = duLieu.gioBatDau;
         if (duLieu.gioKetThuc) lich.gioKetThuc = duLieu.gioKetThuc;

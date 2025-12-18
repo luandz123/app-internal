@@ -26,7 +26,12 @@ export class ScheduleItemDto {
   @IsEnum(LoaiHinhLamViec)
   workType!: LoaiHinhLamViec;
 
-  @ApiProperty({ enum: LoaiCaLam, example: LoaiCaLam.FULL_DAY })
+  @ApiProperty({
+    enum: LoaiCaLam,
+    example: LoaiCaLam.MORNING,
+    description:
+      'Loại ca: morning (sáng), afternoon (chiều), custom (tùy chỉnh)',
+  })
   @IsEnum(LoaiCaLam)
   loaiCa!: LoaiCaLam;
 

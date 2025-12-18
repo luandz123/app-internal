@@ -9,7 +9,10 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { WorkSchedule } from '../../work-schedule/entities/work-schedule.entity';
-import { LoaiHinhLamViec } from '../../work-schedule/constants/work-schedule.constants';
+import {
+  LoaiHinhLamViec,
+  LoaiCaLam,
+} from '../../work-schedule/constants/work-schedule.constants';
 
 export enum TrangThaiChamCong {
   DA_VAO = 'checked_in',
@@ -30,11 +33,11 @@ export class ChamCong {
   nguoiDung!: User;
 
   @Column({ type: 'uuid', nullable: true })
-  maLichLam!: string;
+  maLichLam!: string | null;
 
   @ManyToOne(() => WorkSchedule, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'maLichLam' })
-  lichLam!: WorkSchedule;
+  lichLam!: WorkSchedule | null;
 
   @Column({ type: 'date' })
   ngay!: Date;
@@ -56,10 +59,10 @@ export class ChamCong {
   soPhutLamViec!: number;
 
   @Column({ type: 'varchar', length: 5, nullable: true })
-  gioDangKyBatDau!: string;
+  gioDangKyBatDau!: string | null;
 
   @Column({ type: 'varchar', length: 5, nullable: true })
-  gioDangKyKetThuc!: string;
+  gioDangKyKetThuc!: string | null;
 
   @Column({ type: 'int', default: 0 })
   soPhutDangKy!: number;
@@ -69,6 +72,10 @@ export class ChamCong {
 
   @Column({ type: 'enum', enum: LoaiHinhLamViec, default: LoaiHinhLamViec.WFO })
   loaiLamViec!: LoaiHinhLamViec;
+
+  // Thêm trường loại ca để phân biệt ca sáng/chiều
+  @Column({ type: 'enum', enum: LoaiCaLam, nullable: true })
+  loaiCa!: LoaiCaLam | null;
 
   @Column({ type: 'int', default: 0 })
   soPhutDiMuon!: number;
