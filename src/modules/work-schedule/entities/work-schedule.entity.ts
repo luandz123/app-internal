@@ -42,13 +42,13 @@ export class WorkSchedule {
   @Column({ type: 'enum', enum: LoaiCaLam, default: LoaiCaLam.FULL_DAY })
   loaiCa!: LoaiCaLam;
 
-  @Column({ type: 'varchar', length: 5 })
+  @Column({ type: 'varchar', length: 5, nullable: true })
   gioBatDau!: string;
 
-  @Column({ type: 'varchar', length: 5 })
+  @Column({ type: 'varchar', length: 5, nullable: true })
   gioKetThuc!: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   soPhutDuKien!: number;
 
   @Column({ type: 'text', nullable: true })
