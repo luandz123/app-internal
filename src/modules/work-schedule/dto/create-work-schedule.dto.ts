@@ -12,7 +12,10 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { LoaiCaLam, LoaiHinhLamViec } from '../constants/work-schedule.constants';
+import {
+  LoaiCaLam,
+  LoaiHinhLamViec,
+} from '../constants/work-schedule.constants';
 
 export class ScheduleItemDto {
   @ApiProperty({ example: '2025-11-24' })
@@ -27,16 +30,26 @@ export class ScheduleItemDto {
   @IsEnum(LoaiCaLam)
   loaiCa!: LoaiCaLam;
 
-  @ApiPropertyOptional({ example: '08:30', description: 'Required if loaiCa is custom' })
+  @ApiPropertyOptional({
+    example: '08:30',
+    description: 'Required if loaiCa is custom',
+  })
   @ValidateIf((o) => o.loaiCa === LoaiCaLam.CUSTOM)
   @IsNotEmpty()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Time must be in HH:mm format' })
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'Time must be in HH:mm format',
+  })
   gioBatDau?: string;
 
-  @ApiPropertyOptional({ example: '17:30', description: 'Required if loaiCa is custom' })
+  @ApiPropertyOptional({
+    example: '17:30',
+    description: 'Required if loaiCa is custom',
+  })
   @ValidateIf((o) => o.loaiCa === LoaiCaLam.CUSTOM)
   @IsNotEmpty()
-  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: 'Time must be in HH:mm format' })
+  @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'Time must be in HH:mm format',
+  })
   gioKetThuc?: string;
 
   @ApiPropertyOptional()
