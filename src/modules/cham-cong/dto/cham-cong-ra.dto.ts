@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID, Matches } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ChamCongRaDto {
@@ -10,15 +10,8 @@ export class ChamCongRaDto {
   maChamCong?: string;
 
   @ApiPropertyOptional({
-    description: 'Vị trí GPS format "latitude,longitude"',
+    description: 'Ghi chú khi check-out',
   })
-  @IsOptional()
-  @IsString()
-  @Matches(/^-?\d+\.?\d*,-?\d+\.?\d*$/, {
-    message: 'Location must be in format "latitude,longitude"',
-  })
-  viTri?: string;
-
   @IsOptional()
   @IsString()
   ghiChu?: string;

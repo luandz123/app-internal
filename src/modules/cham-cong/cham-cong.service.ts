@@ -273,7 +273,6 @@ export class ChamCongService {
       thoiGianVao: now,
       trangThai: TrangThaiChamCong.DA_VAO,
       ipVao: ipAddress,
-      viTriVao: dto.viTri ?? null,
       maLichLam: selectedSchedule.id,
       gioDangKyBatDau: selectedSchedule.gioBatDau,
       gioDangKyKetThuc: selectedSchedule.gioKetThuc,
@@ -355,7 +354,6 @@ export class ChamCongService {
     attendance.thoiGianRa = now;
     attendance.trangThai = TrangThaiChamCong.HOAN_THANH;
     attendance.ipRa = ipAddress;
-    attendance.viTriRa = dto.viTri ?? null;
     attendance.soPhutLamViec = workingMinutes;
     attendance.soPhutVeSom = earlyMinutes;
     attendance.soPhutTangCa = overtimeMinutes;

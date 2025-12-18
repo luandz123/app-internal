@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -15,6 +16,7 @@ import {
 } from '../constants/work-schedule.constants';
 
 @Entity({ name: 'work_schedules' })
+@Index(['userId', 'date', 'loaiCa'], { unique: true })
 export class WorkSchedule {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

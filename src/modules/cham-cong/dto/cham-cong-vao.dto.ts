@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsUUID, Matches } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { LoaiCaLam } from '../../work-schedule/constants/work-schedule.constants';
 
@@ -19,15 +19,8 @@ export class ChamCongVaoDto {
   loaiCa?: LoaiCaLam;
 
   @ApiPropertyOptional({
-    description: 'Vị trí GPS format "latitude,longitude"',
+    description: 'Ghi chú khi check-in',
   })
-  @IsOptional()
-  @IsString()
-  @Matches(/^-?\d+\.?\d*,-?\d+\.?\d*$/, {
-    message: 'Location must be in format "latitude,longitude"',
-  })
-  viTri?: string;
-
   @IsOptional()
   @IsString()
   ghiChu?: string;

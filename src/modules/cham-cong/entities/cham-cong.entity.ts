@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -21,6 +22,7 @@ export enum TrangThaiChamCong {
 }
 
 @Entity({ name: 'attendances' })
+@Index(['maNguoiDung', 'ngay', 'maLichLam'], { unique: true })
 export class ChamCong {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -91,12 +93,6 @@ export class ChamCong {
 
   @Column({ type: 'varchar', length: 45, nullable: true })
   ipRa!: string | null;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  viTriVao!: string | null;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  viTriRa!: string | null;
 
   @Column({ type: 'text', nullable: true })
   ghiChu!: string | null;
