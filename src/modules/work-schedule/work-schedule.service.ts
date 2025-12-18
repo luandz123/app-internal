@@ -85,7 +85,7 @@ export class DichVuLichLamViec {
           );
         }
 
-        return { ...item, start: start!, end: end!, minutes };
+        return { ...item, start: start, end: end, minutes };
       });
 
       // Check overlap
