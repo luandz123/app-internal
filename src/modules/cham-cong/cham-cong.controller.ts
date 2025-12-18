@@ -165,4 +165,36 @@ export class ChamCongController {
   async layChiTiet(@Param('id', ParseUUIDPipe) maChamCong: string) {
     return this.dichVuChamCong.findOne(maChamCong);
   }
+
+  /**
+   * Admin: Chấm công vào thay nhân viên
+   */
+  @Post('user/:userId/check-in')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Chấm công vào cho nhân viên' })
+  @ApiParam({ name: 'userId', description: 'ID của nhân viên' })
+  async adminCheckIn(
+    @Param('userId', ParseUUIDPipe) maNguoiDung: string,
+    @Body() duLieu: ChamCongVaoDto,
+    @Ip() diaChiIp: string,
+  ) {
+    return this.dichVuChamCong.checkIn(maNguoiDung, duLieu, diaChiIp);
+  }
+
+  /**
+   * Admin: Chấm công ra thay nhân viên
+   */
+  @Post('user/:userId/check-out')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Chấm công ra cho nhân viên' })
+  @ApiParam({ name: 'userId', description: 'ID của nhân viên' })
+  async adminCheckOut(
+    @Param('userId', ParseUUIDPipe) maNguoiDung: string,
+    @Body() duLieu: ChamCongRaDto,
+    @Ip() diaChiIp: string,
+  ) {
+    return this.dichVuChamCong.checkOut(maNguoiDung, duLieu, diaChiIp);
+  }
 }

@@ -15,6 +15,7 @@ import {
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiParam,
 } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -73,6 +74,51 @@ export class WorkScheduleController {
   @ApiOperation({ summary: 'Lấy toàn bộ lịch làm việc theo kỳ (chỉ Admin)' })
   findByPeriod(@Param('periodId', new ParseUUIDPipe()) periodId: string) {
     return this.dichVuLich.timTheoKy(periodId);
+  }
+
+  @Get('user/:userId')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Lấy lịch làm việc của một nhân viên (chỉ Admin)' })
+  @ApiParam({ name: 'userId', description: 'ID của nhân viên' })
+  findUserSchedules(@Param('userId', new ParseUUIDPipe()) userId: string) {
+    return this.dichVuLich.timTheoNguoiDung(userId);
+  }
+
+  @Get('user/:userId/period/:periodId')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Lấy lịch làm việc của một nhân viên theo kỳ (chỉ Admin)',
+  })
+  @ApiParam({ name: 'userId', description: 'ID của nhân viên' })
+  @ApiParam({ name: 'periodId', description: 'ID của kỳ' })
+  findUserSchedulesByPeriod(
+    @Param('userId', new ParseUUIDPipe()) userId: string,
+    @Param('periodId', new ParseUUIDPipe()) periodId: string,
+  ) {
+    return this.dichVuLich.timTheoNguoiDungVaKy(userId, periodId);
+  }
+
+  @Get('user/:userId/calendar')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: 'Lấy lịch làm việc của một nhân viên theo khoảng ngày (chỉ Admin)',
+  })
+  @ApiParam({ name: 'userId', description: 'ID của nhân viên' })
+  @ApiQuery({ name: 'startDate', required: true, example: '2025-11-01' })
+  @ApiQuery({ name: 'endDate', required: true, example: '2025-11-30' })
+  findUserCalendar(
+    @Param('userId', new ParseUUIDPipe()) userId: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.dichVuLich.timTheoKhoangThoiGian(
+      userId,
+      new Date(startDate),
+      new Date(endDate),
+    );
   }
 
   @Get('period/:periodId/status')

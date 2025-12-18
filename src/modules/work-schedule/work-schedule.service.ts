@@ -72,14 +72,15 @@ export class DichVuLichLamViec {
         note?: string;
       }> = [];
 
-      // Kiểm tra trùng loại ca trong cùng ngày (không cho đăng ký 2 ca sáng hoặc 2 ca chiều)
+      // Kiểm tra trùng loại ca trong cùng ngày (chỉ không cho đăng ký 2 ca sáng hoặc 2 ca chiều)
+      // Ca custom có thể đăng ký nhiều lần
       const caTypes = items
         .filter((i) => i.loaiCa !== LoaiCaLam.CUSTOM)
         .map((i) => i.loaiCa);
       const uniqueCaTypes = new Set(caTypes);
       if (caTypes.length !== uniqueCaTypes.size) {
         throw new BadRequestException(
-          `Ngày ${dateStr} không thể đăng ký trùng loại ca`,
+          `Ngày ${dateStr} không thể đăng ký trùng loại ca (sáng/chiều)`,
         );
       }
 
@@ -88,10 +89,10 @@ export class DichVuLichLamViec {
         let end = item.gioKetThuc;
 
         if (item.loaiCa !== LoaiCaLam.CUSTOM) {
-          // Ca sáng hoặc chiều: dùng giờ mặc định
+          // Ca sáng hoặc chiều: dùng giờ mặc định nếu không có giờ tùy chỉnh
           const def = CA_LAM_VIEC_MAC_DINH[item.loaiCa];
-          start = def.gioBatDau;
-          end = def.gioKetThuc;
+          start = item.gioBatDau || def.gioBatDau;
+          end = item.gioKetThuc || def.gioKetThuc;
         } else {
           // Ca tùy chỉnh: bắt buộc có giờ
           if (!start || !end) {
@@ -263,9 +264,10 @@ export class DichVuLichLamViec {
     if (duLieu.loaiCa) {
       lich.loaiCa = duLieu.loaiCa;
       if (duLieu.loaiCa !== LoaiCaLam.CUSTOM) {
+        // Ca sáng/chiều: dùng giờ mặc định nếu không cung cấp giờ tùy chỉnh
         const def = CA_LAM_VIEC_MAC_DINH[duLieu.loaiCa];
-        lich.gioBatDau = def.gioBatDau;
-        lich.gioKetThuc = def.gioKetThuc;
+        lich.gioBatDau = duLieu.gioBatDau || def.gioBatDau;
+        lich.gioKetThuc = duLieu.gioKetThuc || def.gioKetThuc;
         lich.soPhutDuKien = this.calculateMinutes(
           lich.gioBatDau,
           lich.gioKetThuc,
@@ -278,13 +280,21 @@ export class DichVuLichLamViec {
           lich.gioKetThuc,
         );
       }
-    } else if (lich.loaiCa === LoaiCaLam.CUSTOM) {
+    } else {
+      // Cập nhật giờ cho ca hiện tại (sáng, chiều hoặc custom)
       if (duLieu.gioBatDau) lich.gioBatDau = duLieu.gioBatDau;
       if (duLieu.gioKetThuc) lich.gioKetThuc = duLieu.gioKetThuc;
-      lich.soPhutDuKien = this.calculateMinutes(
-        lich.gioBatDau,
-        lich.gioKetThuc,
-      );
+      if (duLieu.gioBatDau || duLieu.gioKetThuc) {
+        lich.soPhutDuKien = this.calculateMinutes(
+          lich.gioBatDau,
+          lich.gioKetThuc,
+        );
+      }
+    }
+
+    // Kiểm tra tối thiểu 2 giờ
+    if (lich.soPhutDuKien < WORK_SCHEDULE_CONSTANTS.MIN_SHIFT_MINUTES) {
+      throw new BadRequestException('Ca làm việc phải tối thiểu 2 giờ');
     }
 
     return this.khoLich.save(lich);

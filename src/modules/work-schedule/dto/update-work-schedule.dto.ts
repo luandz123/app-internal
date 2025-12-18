@@ -16,12 +16,18 @@ export class UpdateWorkScheduleDto {
   @IsEnum(LoaiCaLam)
   loaiCa?: LoaiCaLam;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description:
+      'Giờ bắt đầu tùy chỉnh (có thể dùng cho ca sáng/chiều để override mặc định)',
+  })
   @IsOptional()
   @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
   gioBatDau?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description:
+      'Giờ kết thúc tùy chỉnh (có thể dùng cho ca sáng/chiều để override mặc định)',
+  })
   @IsOptional()
   @Matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
   gioKetThuc?: string;

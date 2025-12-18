@@ -37,7 +37,8 @@ export class ScheduleItemDto {
 
   @ApiPropertyOptional({
     example: '08:30',
-    description: 'Required if loaiCa is custom',
+    description:
+      'Giờ bắt đầu tùy chỉnh (bắt buộc với ca custom, tùy chọn với ca sáng/chiều để override)',
   })
   @ValidateIf((o) => o.loaiCa === LoaiCaLam.CUSTOM)
   @IsNotEmpty()
@@ -48,7 +49,8 @@ export class ScheduleItemDto {
 
   @ApiPropertyOptional({
     example: '17:30',
-    description: 'Required if loaiCa is custom',
+    description:
+      'Giờ kết thúc tùy chỉnh (bắt buộc với ca custom, tùy chọn với ca sáng/chiều để override)',
   })
   @ValidateIf((o) => o.loaiCa === LoaiCaLam.CUSTOM)
   @IsNotEmpty()

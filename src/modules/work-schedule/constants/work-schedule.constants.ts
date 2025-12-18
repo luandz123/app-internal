@@ -1,8 +1,9 @@
-// Loại ca làm việc - Mỗi ngày có thể đăng ký 1 hoặc nhiều ca
+// Loại ca làm việc - Mỗi ngày có thể đăng ký nhiều ca (không giới hạn số ca)
+// Mỗi loại ca (sáng/chiều) chỉ được đăng ký 1 lần/ngày, ca custom có thể đăng ký nhiều lần
 export enum LoaiCaLam {
-  MORNING = 'morning', // Ca sáng: 08:30 - 12:00
-  AFTERNOON = 'afternoon', // Ca chiều: 13:00 - 17:30
-  CUSTOM = 'custom', // Ca tùy chỉnh: tối thiểu 2 giờ
+  MORNING = 'morning', // Ca sáng: mặc định 08:30 - 12:00 (có thể tùy chỉnh)
+  AFTERNOON = 'afternoon', // Ca chiều: mặc định 13:00 - 17:30 (có thể tùy chỉnh)
+  CUSTOM = 'custom', // Ca tùy chỉnh: tự định nghĩa giờ, tối thiểu 2 giờ
 }
 
 export enum LoaiHinhLamViec {
