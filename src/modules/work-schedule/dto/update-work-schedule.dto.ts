@@ -1,6 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
-import { LoaiCaLam, LoaiHinhLamViec } from '../constants/work-schedule.constants';
+import {
+  LoaiCaLam,
+  LoaiHinhLamViec,
+} from '../constants/work-schedule.constants';
 
 export class UpdateWorkScheduleDto {
   @ApiPropertyOptional({ enum: LoaiHinhLamViec })
