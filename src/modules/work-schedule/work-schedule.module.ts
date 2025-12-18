@@ -4,9 +4,13 @@ import { RegistrationPeriodModule } from '../registration-period/registration-pe
 import { WorkSchedule } from './entities/work-schedule.entity';
 import { WorkScheduleController } from './work-schedule.controller';
 import { DichVuLichLamViec } from './work-schedule.service';
+import { ChamCong } from '../cham-cong/entities/cham-cong.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([WorkSchedule]), RegistrationPeriodModule],
+  imports: [
+    TypeOrmModule.forFeature([WorkSchedule, ChamCong]),
+    RegistrationPeriodModule,
+  ],
   controllers: [WorkScheduleController],
   providers: [DichVuLichLamViec],
   exports: [DichVuLichLamViec],

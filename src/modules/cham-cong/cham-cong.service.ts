@@ -116,7 +116,7 @@ export class ChamCongService {
       throw new BadRequestException('Không tìm thấy lịch làm việc cho hôm nay');
     }
 
-    // Lấy các ca đã check-in
+    // Lấy tất cả các bản ghi chấm công trong ngày (bao gồm cả đã hoàn thành)
     let attendances = await this.chamCongRepository.find({
       where: { maNguoiDung, ngay: today },
     });
@@ -152,6 +152,8 @@ export class ChamCongService {
       });
     }
 
+    // Lấy tất cả các ca đã có bản ghi chấm công (bao gồm cả đang check-in và đã hoàn thành)
+    // Mỗi ca chỉ được check-in 1 lần duy nhất
     const checkedInIds = new Set(
       attendances.map((a) => a.maLichLam).filter((id): id is string => !!id),
     );
@@ -160,7 +162,6 @@ export class ChamCongService {
 
     // Trường hợp 1: Chỉ định ID lịch cụ thể
     if (dto.maLichLam) {
-      // ...existing code...
       selectedSchedule = schedules.find((s) => s.id === dto.maLichLam) || null;
       if (!selectedSchedule) {
         throw new BadRequestException(
@@ -168,25 +169,39 @@ export class ChamCongService {
         );
       }
       if (checkedInIds.has(selectedSchedule.id)) {
-        throw new BadRequestException('Ca làm việc này đã được check-in');
+        throw new BadRequestException(
+          'Ca làm việc này đã được check-in. Mỗi ca chỉ được check-in 1 lần duy nhất.',
+        );
       }
+      // Kiểm tra ca có thể check-in được không (chưa quá giờ, chưa đến ca tiếp theo)
+      this.validateShiftCanCheckIn(
+        selectedSchedule,
+        schedules,
+        checkedInIds,
+        currentMinutes,
+      );
     }
     // Trường hợp 2: Chỉ định loại ca
     else if (dto.loaiCa) {
-      // ...existing code...
       selectedSchedule =
         schedules.find(
           (s) => s.loaiCa === dto.loaiCa && !checkedInIds.has(s.id),
         ) || null;
       if (!selectedSchedule) {
         throw new BadRequestException(
-          `Không tìm thấy ${this.getShiftName(dto.loaiCa)} chưa check-in`,
+          `${this.getShiftName(dto.loaiCa)} đã được check-in. Mỗi ca chỉ được check-in 1 lần duy nhất.`,
         );
       }
+      // Kiểm tra ca có thể check-in được không (chưa quá giờ, chưa đến ca tiếp theo)
+      this.validateShiftCanCheckIn(
+        selectedSchedule,
+        schedules,
+        checkedInIds,
+        currentMinutes,
+      );
     }
     // Trường hợp 3: Tự động tìm ca phù hợp
     else {
-      // ...existing code...
       selectedSchedule = this.findNextAvailableShift(
         schedules,
         checkedInIds,
@@ -194,7 +209,7 @@ export class ChamCongService {
       );
       if (!selectedSchedule) {
         throw new BadRequestException(
-          'Bạn đã check-in hết các ca làm việc trong ngày',
+          'Không có ca làm việc nào có thể check-in. Các ca đã quá giờ kết thúc hoặc đã được check-in.',
         );
       }
     }
@@ -233,17 +248,62 @@ export class ChamCongService {
         this.timeToMinutes(a.gioBatDau) - this.timeToMinutes(b.gioBatDau),
     );
 
-    // Tìm ca phù hợp nhất (ca đầu tiên mà giờ hiện tại <= giờ kết thúc)
+    // Tìm ca phù hợp nhất - ca đang trong khung giờ (chưa quá giờ kết thúc)
     for (const schedule of availableSchedules) {
       const endMinutes = this.timeToMinutes(schedule.gioKetThuc);
-      // Cho phép check-in nếu chưa hết giờ của ca đó
+      // Chỉ cho phép check-in nếu chưa hết giờ của ca đó
       if (currentMinutes <= endMinutes) {
         return schedule;
       }
     }
 
-    // Nếu tất cả ca đều đã qua giờ, trả về ca cuối cùng để ghi nhận đi muộn
-    return availableSchedules[availableSchedules.length - 1];
+    // Không trả về ca nào nếu tất cả đều đã quá giờ kết thúc
+    return null;
+  }
+
+  /**
+   * Kiểm tra xem ca có thể check-in được không
+   * - Không cho check-in nếu đã quá giờ kết thúc ca
+   * - Không cho check-in nếu đã đến giờ bắt đầu ca tiếp theo
+   */
+  private validateShiftCanCheckIn(
+    schedule: WorkSchedule,
+    allSchedules: WorkSchedule[],
+    checkedInIds: Set<string>,
+    currentMinutes: number,
+  ): void {
+    const endMinutes = this.timeToMinutes(schedule.gioKetThuc);
+    const startMinutes = this.timeToMinutes(schedule.gioBatDau);
+
+    // Kiểm tra đã quá giờ kết thúc ca chưa
+    if (currentMinutes > endMinutes) {
+      throw new BadRequestException(
+        `Đã quá giờ kết thúc ${this.getShiftName(schedule.loaiCa)} (${schedule.gioBatDau} - ${schedule.gioKetThuc}). Không thể check-in sau khi ca đã kết thúc.`,
+      );
+    }
+
+    // Tìm ca tiếp theo (ca chưa check-in và có giờ bắt đầu sau ca hiện tại)
+    const nextShift = allSchedules
+      .filter(
+        (s) =>
+          s.id !== schedule.id &&
+          !checkedInIds.has(s.id) &&
+          this.timeToMinutes(s.gioBatDau) > startMinutes,
+      )
+      .sort(
+        (a, b) =>
+          this.timeToMinutes(a.gioBatDau) - this.timeToMinutes(b.gioBatDau),
+      )[0];
+
+    // Nếu có ca tiếp theo và đã đến giờ bắt đầu ca đó
+    if (nextShift) {
+      const nextStartMinutes = this.timeToMinutes(nextShift.gioBatDau);
+      if (currentMinutes >= nextStartMinutes) {
+        throw new BadRequestException(
+          `Đã đến giờ ${this.getShiftName(nextShift.loaiCa)} (${nextShift.gioBatDau} - ${nextShift.gioKetThuc}). Không thể check-in ${this.getShiftName(schedule.loaiCa)} (${schedule.gioBatDau} - ${schedule.gioKetThuc}) nữa.`,
+        );
+      }
+    }
   }
 
   async checkIn(
@@ -296,19 +356,28 @@ export class ChamCongService {
 
     // Nếu có chỉ định mã chấm công cụ thể
     if (dto.maChamCong) {
-      attendance = await this.chamCongRepository.findOne({
+      // Kiểm tra xem bản ghi có tồn tại không
+      const existingAttendance = await this.chamCongRepository.findOne({
         where: {
           id: dto.maChamCong,
           maNguoiDung,
-          trangThai: TrangThaiChamCong.DA_VAO,
         },
         relations: ['lichLam'],
       });
-      if (!attendance) {
+
+      if (!existingAttendance) {
         throw new BadRequestException(
-          'Không tìm thấy bản ghi chấm công với ID đã chỉ định hoặc đã check-out',
+          'Không tìm thấy bản ghi chấm công với ID đã chỉ định.',
         );
       }
+
+      if (existingAttendance.trangThai === TrangThaiChamCong.HOAN_THANH) {
+        throw new BadRequestException(
+          'Ca làm việc này đã được check-out. Mỗi ca chỉ được check-out 1 lần duy nhất.',
+        );
+      }
+
+      attendance = existingAttendance;
     } else {
       // Tìm bản ghi check-in chưa check-out (ưu tiên ca sớm nhất)
       attendance = await this.chamCongRepository.findOne({

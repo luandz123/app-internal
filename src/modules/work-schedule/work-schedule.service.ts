@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import { RegistrationPeriodService } from '../registration-period/registration-period.service';
 import { RegistrationPeriodStatus } from '../registration-period/entities/registration-period.entity';
 import {
@@ -18,12 +18,15 @@ import {
   LoaiCaLam,
   WORK_SCHEDULE_CONSTANTS,
 } from './constants/work-schedule.constants';
+import { ChamCong } from '../cham-cong/entities/cham-cong.entity';
 
 @Injectable()
 export class DichVuLichLamViec {
   constructor(
     @InjectRepository(WorkSchedule)
     private readonly khoLich: Repository<WorkSchedule>,
+    @InjectRepository(ChamCong)
+    private readonly chamCongRepository: Repository<ChamCong>,
     private readonly dichVuKy: RegistrationPeriodService,
   ) {}
 
@@ -144,11 +147,45 @@ export class DichVuLichLamViec {
       }
     }
 
-    // Xóa lịch cũ của kỳ này
-    await this.khoLich.delete({
-      userId: idNguoiDung,
-      periodId: duLieu.periodId,
+    // Lấy tất cả lịch cũ của user trong kỳ này
+    const lichCu = await this.khoLich.find({
+      where: { userId: idNguoiDung, periodId: duLieu.periodId },
     });
+
+    if (lichCu.length > 0) {
+      // Lấy danh sách ID lịch cũ
+      const lichCuIds = lichCu.map((l) => l.id);
+
+      // Kiểm tra xem có bản ghi chấm công nào liên kết với các lịch này không
+      const chamCongLienKet = await this.chamCongRepository.find({
+        where: { maLichLam: In(lichCuIds) },
+      });
+
+      if (chamCongLienKet.length > 0) {
+        // Lấy danh sách ngày đã chấm công
+        const ngayDaChamCong = [
+          ...new Set(
+            chamCongLienKet.map((cc) => {
+              const ngay = new Date(cc.ngay);
+              return `${ngay.getDate()}/${ngay.getMonth() + 1}/${ngay.getFullYear()}`;
+            }),
+          ),
+        ];
+
+        throw new BadRequestException(
+          `Không thể thay đổi lịch đăng ký vì đã có dữ liệu chấm công cho các ngày: ${ngayDaChamCong.join(', ')}. Vui lòng liên hệ quản trị viên để được hỗ trợ.`,
+        );
+      }
+
+      // Xóa lịch cũ nếu không có chấm công liên kết
+      await this.khoLich
+        .createQueryBuilder()
+        .delete()
+        .from(WorkSchedule)
+        .where('userId = :userId', { userId: idNguoiDung })
+        .andWhere('periodId = :periodId', { periodId: duLieu.periodId })
+        .execute();
+    }
 
     return this.khoLich.save(danhSachLich);
   }
