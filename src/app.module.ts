@@ -35,9 +35,7 @@ import { ChamCongModule } from './modules/cham-cong/cham-cong.module';
         password: configService.get<string>('DATABASE_PASSWORD'),
         autoLoadEntities: true,
         synchronize: false, // NOTE: disable in production and rely on migrations
-        ssl: {
-          rejectUnauthorized: false,
-        },
+        ssl: false,
       }),
     }),
     UserModule,

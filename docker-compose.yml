@@ -1,0 +1,30 @@
+version: '3.8'
+# Sửa 1: Thêm 's' vào services
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5433:5432"
+    volumes:
+      # Sửa 2: Đồng bộ tên volume với phần volumes ở cuối file
+      - db_data:/var/lib/postgresql/data
+  app:
+    # Sửa 3: Thêm dấu chấm để chỉ định thư mục build
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: user
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: mydatabase
+    depends_on:
+      - db
+# Sửa 2: Tên volume phải khớp với bên trên
+volumes:
+  db_data:

@@ -1,0 +1,31 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Tải code về
+    - uses: actions/checkout@v4
+
+    # 2. Cài đặt Node.js
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    # 3. Cài dependencies
+    - run: npm ci
+
+    # 4. Chạy Build thử để đảm bảo code không lỗi cú pháp
+    - run: npm run build
+
+    # 5. Chạy Unit Test
+    - run: npm run test
