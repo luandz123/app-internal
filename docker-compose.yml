@@ -23,6 +23,7 @@ services:
       DATABASE_USER: user
       DATABASE_PASSWORD: password
       DATABASE_NAME: mydatabase
+      NODE_ENV: development
     depends_on:
       - db
 # Sửa 2: Tên volume phải khớp với bên trên

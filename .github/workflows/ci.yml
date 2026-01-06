@@ -1,31 +1,40 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-
+  # GIAI ĐOẠN 1: CI (Kiểm tra)
+  test-and-build:
+    runs-on: ubuntu-22.04
     steps:
-    # 1. Tải code về
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    # 2. Cài đặt Node.js
-    - name: Use Node.js
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
 
-    # 3. Cài dependencies
-    - run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-    # 4. Chạy Build thử để đảm bảo code không lỗi cú pháp
-    - run: npm run build
+    - name: Build check
+      run: npm run build
 
-    # 5. Chạy Unit Test
-    - run: npm run test
+    - name: Run Tests
+      run: npm run test
+
+  # GIAI ĐOẠN 2: CD (Triển khai)
+  # Job này chỉ chạy khi job 'test-and-build' ở trên thành công
+  deploy-to-render:
+    needs: test-and-build  # <-- Quan trọng: Phải đợi Test xong
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' # Chỉ deploy khi code ở nhánh main
+    
+    steps:
+      - name: Trigger Render Deploy
+        # Sử dụng curl để gửi lệnh gọi tới Render
+        run: curl "${{ secrets.https://api.render.com/deploy/srv-d4tv67uuk2gs73c8456g?key=Vo3c4gBl2Y8 }}"

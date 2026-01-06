@@ -34,8 +34,11 @@ import { ChamCongModule } from './modules/cham-cong/cham-cong.module';
         username: configService.get<string>('DATABASE_USER'),
         password: configService.get<string>('DATABASE_PASSWORD'),
         autoLoadEntities: true,
-        synchronize: false, // NOTE: disable in production and rely on migrations
-        ssl: false,
+        synchronize: process.env.NODE_ENV !== 'production', // NOTE: disable in production and rely on migrations
+        ssl:
+          process.env.NODE_ENV === 'production'
+            ? { rejectUnauthorized: false }
+            : false,
       }),
     }),
     UserModule,
